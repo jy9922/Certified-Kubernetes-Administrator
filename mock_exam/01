@@ -1,0 +1,179 @@
+Deploy a pod named `nginx-pod` using the `nginx:alpine` image.
+
+Once done, click on the `Next Question` button in the top right corner of this panel. You may navigate back and forth freely between all questions. Once done with all questions, click on `End Exam`. Your work will be validated at the end and score shown. Good Luck!
+
+- Name: nginx-pod
+- Image: nginx:alpine
+
+```yaml
+controlplane ~ ➜  k run nginx-pod --image nginx:alpine 
+pod/nginx-pod created
+
+controlplane ~ ➜  k get po
+NAME        READY   STATUS    RESTARTS   AGE
+nginx-pod   1/1     Running   0          2s
+```
+
+Deploy a `messaging` pod using the `redis:alpine` image with the labels set to `tier=msg`.
+
+- Pod Name: messaging
+- Image: redis:alpine
+- Labels: tier=msg
+
+```yaml
+controlplane ~ ➜  k run messaging --image redis:alpine --labels tier=msg
+pod/messaging created
+
+controlplane ~ ✖ k get po --show-labels 
+NAME        READY   STATUS    RESTARTS   AGE   LABELS
+messaging   1/1     Running   0          27s   tier=msg
+nginx-pod   1/1     Running   0          88s   run=nginx-pod
+```
+
+Create a namespace named `apx-x9984574.`
+
+```yaml
+controlplane ~ ➜  k create ns apx-x9984574
+namespace/apx-x9984574 created
+
+controlplane ~ ➜  k get ns
+NAME              STATUS   AGE
+apx-x9984574      Active   5s
+default           Active   67m
+kube-flannel      Active   66m
+kube-node-lease   Active   67m
+kube-public       Active   67m
+kube-system       Active   67m
+```
+
+Get the list of nodes in JSON format and store it in a file at `/opt/outputs/nodes-z3444kd9.json`.
+
+```yaml
+controlplane ~ ✖ k get no -o=jsonpath='{}' > /opt/outputs/nodes-z3444kd9.json
+
+controlplane ~ ➜  cat /opt/outputs/nodes-z3444kd9.json
+{"apiVersion":"v1","items":[{"apiVersion":"v1","kind":"Node","metadata":{"annotations":{"flannel.alpha.coreos.com/backend-data":"{\"VNI\":1,\"VtepMAC\":\"da:
+```
+
+Create a service `messaging-service` to expose the `messaging` application within the cluster on port `6379`.
+
+Use imperative commands.
+
+- Service: messaging-service
+- Port: 6379
+- Type: ClusterIp
+- Use the right labels
+
+```yaml
+controlplane ~ ➜  kubectl expose pod messaging --port=6379 --target-port=6379 --name=messaging-service --labels tire=msg
+service/messaging-service exposed
+```
+
+Create a deployment named `hr-web-app` using the image `kodekloud/webapp-color` with `2` replicas.
+
+- Name: hr-web-app
+- Image: kodekloud/webapp-color
+- Replicas: 2
+
+```yaml
+controlplane ~ ➜  k create deployment hr-web-app --image kodekloud/webapp-color --replicas 2
+deployment.apps/hr-web-app created
+```
+
+Create a static pod named `static-busybox` on the controlplane node that uses the `busybox` image and the command `sleep 1000`.
+
+- Name: static-busybox
+- Image: busybox
+
+```yaml
+controlplane /etc/kubernetes/manifests ➜  vi static-pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: static-busybox
+spec:
+  containers:
+    - name: busybox
+      image: busybox
+      command: ["sleep", "1000"]
+```
+
+Create a POD in the `finance` namespace named `temp-bus` with the image `redis:alpine`.
+
+- Name: temp-bus
+- Image Name: redis:alpine
+
+```yaml
+controlplane /etc/kubernetes/manifests ➜  k run temp-bus --image redis:alpine -n finance 
+pod/temp-bus created
+```
+
+A new application `orange`is deployed. There is something wrong with it. Identify and fix the issue.
+
+```yaml
+initContainers:
+  - command:
+    - sh
+    - -c
+    **- sleep 2;**
+
+controlplane /etc/kubernetes/manifests ✖ k replace --force -f /tmp/kubectl-edit-535437940.yaml
+pod "orange" deleted
+pod/orange replaced
+```
+
+Expose the `hr-web-app` as service `hr-web-app-service` application on port `30082` on the nodes on the cluster.
+
+The web application listens on port `8080`.
+
+- Name: hr-web-app-service
+- Type: NodePort
+- Endpoints: 2
+- Port: 8080
+- NodePort: 30082
+
+```yaml
+controlplane /etc/kubernetes/manifests ➜  k expose deployment hr-web-app --name=hr-web-app-service --port 8080 --type NodePort --dry-run=client -o yaml > svc.yaml
+service/hr-web-app-service exposed
+
+ports:
+  - nodePort: 30082
+    port: 8080
+    protocol: TCP
+```
+
+Use JSON PATH query to retrieve the `osImage`s of all the nodes and store it in a file `/opt/outputs/nodes_os_x43kj56.txt`.
+
+The `osImages` are under the `nodeInfo` section under `status` of each node.
+
+```yaml
+controlplane /etc/kubernetes/manifests ➜  k get no -o=jsonpath='{.items[*].status.nodeInfo.osImage}' > /opt/outputs/nodes_os_x43kj56.txt
+
+controlplane /etc/kubernetes/manifests ✖ cat /opt/outputs/nodes_os_x43kj56.txt
+Ubuntu 20.04.5 LTS
+```
+
+Create a `Persistent Volume` with the given specification.
+
+- Volume Name: pv-analytics
+- Storage: 100Mi
+- Access modes: ReadWriteMany
+- Host Path: /pv/data-analytics
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-analytics
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/pv/data-analytics"
+
+controlplane /etc/kubernetes/manifests ➜  k apply -f pv.yaml 
+persistentvolume/pv-analytics created
+```
